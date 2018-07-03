@@ -19,7 +19,7 @@ The home server is implemented on a raspberry server, and with daemon written wi
 ## Compatible Hardware
 
 ESP-01 was modified as described in https://tim.jagenberg.info/2015/01/18/low-power-esp8266/ . The sensor was buit according to https://makezine.com/projects/non-contact-voltage-detector/. I used a 18650 3.7V Li-ion Rechargeable Battery, and HT733, a low dropout voltage regulator.
-
+A wire served as antenna of the sensor was wrapped 3-4 times around the wire connect to the fan of the furnace.
 
 ## License
 
