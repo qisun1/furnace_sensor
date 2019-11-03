@@ -7,11 +7,11 @@ ADC_MODE(ADC_VCC);
 
 /*** SLEEPTIME is the interval between two data collections, 1 second = 1,000,000***/
 /*** 50ms per reading ***/
-/*** 5000ms per sending cycle ***/
+/*** 5000ms per sending cycle 60000000***/ 
 #define SLEEPTIME 60000000
 
-/*** CollectSize is the number of data points to collect before sending to cloud***/
-#define CollectSize 60
+/*** CollectSize is the number of data points to collect before sending to cloud 60 ***/ 
+#define CollectSize 120
 
 /*** Each data point is a bit, ByteSize is the number of bytes needed***/
 const int ByteSize = int((CollectSize + 7) / 8);
@@ -36,12 +36,13 @@ const byte rtcStartAddress = 64;
 const char* ssid = "xxxxxx"; //type your WIFI information inside the quotes
 const char* password = "xxxxxx";
 const char* mqtt_clientid = "furnace";
-const char* mqtt_server = "xxx.xxx.xxx.xxx";
+const char* mqtt_server = "192.168.0.101";
 const char* mqtt_username = "sensor_ge";
-const char* mqtt_password = "xxxxxx";
+const char* mqtt_password = "***REMOVED***";
 const int mqtt_port = 1883;
 const char* topic = "sensor/furnace";
 const char* topic2 = "sensor/Vfurnace";
+const char* topic4 = "sensor/status";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -68,8 +69,10 @@ void setup() {
 	case 5:
 		system_rtc_mem_read(rtcStartAddress, &rtcValues, sizeof(rtcValues));
 		break;
-	case 6:		
+	case 6:	
+  case 0:	
 		//WiFi.disconnect();
+    send_status();
 		WiFi.mode(WIFI_OFF);
 		reset_all();	
 		system_rtc_mem_write(rtcStartAddress, &rtcValues, sizeof(rtcValues));
@@ -197,10 +200,52 @@ void send_data()
 	char buffer[4];
 	itoa(vcc, buffer, 10);
 	client.publish(topic2, buffer, 1);
-
+  delay(100);
 	//Serial.println(vcc);
 	WiFi.disconnect();
 	WiFi.mode(WIFI_OFF);
+}
+
+void send_status()
+{
+  // We start by connecting to a WiFi network
+  WiFi.mode(WIFI_STA);
+  delay(20);
+  WiFi.begin(ssid, password);
+  int t = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    t++;
+    Serial.print(".");
+    if (t > 15)
+    {
+      Serial.println("Wifi failed");
+      return;
+    }
+    delay(1000);
+  }
+
+
+  
+  client.setServer(mqtt_server, mqtt_port);
+  t = 0;
+  while (!client.connected()) {
+    client.connect(mqtt_username, mqtt_username, mqtt_password);
+    t++;
+    if (t > 10)
+    {
+      return;
+    }
+    delay(250);
+  }
+
+
+  client.publish(topic4, mqtt_clientid, 0);
+
+  delay(200); 
+  //Serial.println(vcc);
+  WiFi.disconnect();
+  WiFi.mode(WIFI_OFF);
+  delay(100); 
 }
 
 
@@ -217,5 +262,3 @@ void reset_all()
 	}
 	HEXSTR[ByteSize * 2] = NULL;
 }
-
-
